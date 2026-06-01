@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import TaskItem from "../../components/TaskItem/TaskItem";
 import CreateTaskModal from "../../components/CreateTaskModal/CreateTaskModal";
+import EditTaskModal from "../../components/EditTaskModal/EditTaskModal";
 import { getTasksByListId } from "../../services/tasks/getTasksByListId";
 import { updateTask } from "../../services/tasks/updateTask";
+import { deleteTask } from "../../services/tasks/deleteTask";
 import { createTask } from "../../services/tasks/createTask";
 import type { TaskList } from "../../types/TaskList";
 import type { Task } from "../../types/Task";
 import type { CreateTaskFormData } from "../../components/CreateTaskModal/CreateTaskModal";
+import type { EditTaskFormData } from "../../components/EditTaskModal/EditTaskModal";
 
 interface LocationState {
   list?: TaskList;
@@ -23,7 +26,11 @@ const ListDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [taskModalOpen, setTaskModalOpen] = useState(false);
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const accentColor = list?.color ?? "#7c3aed";
 
@@ -39,21 +46,20 @@ const ListDetail = () => {
 
   useEffect(() => {
     loadTasks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listId]);
 
   const pendingTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
-  const completedCount = completedTasks.length;
   const percentage =
-    tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
 
+  // ── Toggle completion ──────────────────────────────────────────────────────
   const handleToggle = async (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || !listId) return;
 
     const newCompleted = !task.completed;
-
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, completed: newCompleted } : t))
     );
@@ -71,12 +77,44 @@ const ListDetail = () => {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, completed: task.completed } : t))
       );
-      setSaveError(
-        err instanceof Error ? err.message : "Failed to save. Please try again."
-      );
+      setSaveError(err instanceof Error ? err.message : "Failed to save. Please try again.");
     }
   };
 
+  // ── Edit task ──────────────────────────────────────────────────────────────
+  const handleEditSubmit = async (data: EditTaskFormData) => {
+    if (!editingTask) return;
+    await updateTask(editingTask.id, {
+      title: data.title,
+      description: data.description || undefined,
+      priorityId: data.priorityId || null,
+      dueDate: data.dueDate
+        ? data.dueDate.length === 16
+          ? data.dueDate + ":00"
+          : data.dueDate
+        : null,
+    });
+    setEditingTask(null);
+    loadTasks();
+  };
+
+  // ── Delete task ────────────────────────────────────────────────────────────
+  const handleDeleteConfirm = async () => {
+    if (!deletingTaskId) return;
+    setDeleting(true);
+    try {
+      await deleteTask(deletingTaskId);
+      setTasks((prev) => prev.filter((t) => t.id !== deletingTaskId));
+      setDeletingTaskId(null);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Failed to delete task.");
+      setDeletingTaskId(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // ── Create task ────────────────────────────────────────────────────────────
   const handleCreateTask = async (data: CreateTaskFormData) => {
     if (!listId) return;
     await createTask({
@@ -84,9 +122,13 @@ const ListDetail = () => {
       description: data.description || undefined,
       listId,
       priorityId: data.priorityId || undefined,
-      dueDate: data.dueDate ? (data.dueDate.length === 16 ? data.dueDate + ":00" : data.dueDate) : undefined,
+      dueDate: data.dueDate
+        ? data.dueDate.length === 16
+          ? data.dueDate + ":00"
+          : data.dueDate
+        : undefined,
     });
-    setTaskModalOpen(false);
+    setCreateModalOpen(false);
     loadTasks();
   };
 
@@ -101,10 +143,7 @@ const ListDetail = () => {
       >
         <svg
           className="w-4 h-4 transition-transform group-hover:-translate-x-0.5"
-          fill="none"
-          viewBox="0 0 16 16"
-          stroke="currentColor"
-          strokeWidth={2.5}
+          fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2.5}
         >
           <polyline points="10,4 6,8 10,12" />
         </svg>
@@ -123,16 +162,11 @@ const ListDetail = () => {
                 style={{ backgroundColor: accentColor + "18" }}
               >
                 <svg
-                  className="w-6 h-6"
-                  style={{ color: accentColor }}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+                  className="w-6 h-6" style={{ color: accentColor }}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    strokeLinecap="round" strokeLinejoin="round"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
                        M9 5a2 2 0 002 2h2a2 2 0 002-2
                        M9 5a2 2 0 012-2h2a2 2 0 012 2"
@@ -149,21 +183,15 @@ const ListDetail = () => {
               </div>
             </div>
 
-            {/* Stats — only show after loading */}
             {!loading && (
               <div className="flex gap-5 flex-shrink-0">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {tasks.length}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{tasks.length}</div>
                   <div className="text-xs text-gray-400 font-medium">Total</div>
                 </div>
                 <div className="text-center">
-                  <div
-                    className="text-2xl font-bold"
-                    style={{ color: accentColor }}
-                  >
-                    {completedCount}
+                  <div className="text-2xl font-bold" style={{ color: accentColor }}>
+                    {completedTasks.length}
                   </div>
                   <div className="text-xs text-gray-400 font-medium">Done</div>
                 </div>
@@ -171,22 +199,16 @@ const ListDetail = () => {
             )}
           </div>
 
-          {/* Progress bar */}
           {!loading && (
             <div className="mt-5 space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="text-gray-400 font-medium">Overall progress</span>
-                <span className="font-bold" style={{ color: accentColor }}>
-                  {percentage}%
-                </span>
+                <span className="font-bold" style={{ color: accentColor }}>{percentage}%</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${percentage}%`,
-                    backgroundColor: accentColor,
-                  }}
+                  style={{ width: `${percentage}%`, backgroundColor: accentColor }}
                 />
               </div>
             </div>
@@ -194,7 +216,7 @@ const ListDetail = () => {
         </div>
       </div>
 
-      {/* Save error banner */}
+      {/* Save / delete error banner */}
       {saveError && (
         <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-500">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
@@ -209,18 +231,16 @@ const ListDetail = () => {
       {/* Tasks section */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Tasks
-          </h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tasks</h2>
           <div className="flex items-center gap-2">
             {!loading && tasks.length > 0 && (
               <span className="text-xs text-gray-400 font-medium">
-                {pendingTasks.length} Remaining · {completedCount} Done
+                {pendingTasks.length} Remaining · {completedTasks.length} Done
               </span>
             )}
             <button
               type="button"
-              onClick={() => setTaskModalOpen(true)}
+              onClick={() => setCreateModalOpen(true)}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold
                          bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800
                          transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
@@ -246,14 +266,11 @@ const ListDetail = () => {
         )}
 
         {!loading && !error && tasks.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">
-            No tasks in this list yet.
-          </p>
+          <p className="text-sm text-gray-400 text-center py-8">No tasks in this list yet.</p>
         )}
 
-        {!loading && !error && (
+        {!loading && !error && tasks.length > 0 && (
           <div className="space-y-4">
-            {/* Ongoing */}
             {pendingTasks.length > 0 && (
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
@@ -261,25 +278,36 @@ const ListDetail = () => {
                 </p>
                 <div className="space-y-2">
                   {pendingTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} onToggle={handleToggle} />
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onToggle={handleToggle}
+                      onEdit={(id) => setEditingTask(tasks.find((t) => t.id === id) ?? null)}
+                      onDelete={(id) => setDeletingTaskId(id)}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Completed */}
             {completedTasks.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 my-4">
                   <div className="flex-1 h-px bg-gray-200" />
                   <p className="text-xs font-bold text-green-600 uppercase tracking-widest whitespace-nowrap">
-                    ✓ Completed ({completedCount})
+                    ✓ Completed ({completedTasks.length})
                   </p>
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
                 <div className="space-y-2">
                   {completedTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} onToggle={handleToggle} />
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onToggle={handleToggle}
+                      onEdit={(id) => setEditingTask(tasks.find((t) => t.id === id) ?? null)}
+                      onDelete={(id) => setDeletingTaskId(id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -288,11 +316,70 @@ const ListDetail = () => {
         )}
       </div>
 
+      {/* Create task modal */}
       <CreateTaskModal
-        isOpen={taskModalOpen}
-        onClose={() => setTaskModalOpen(false)}
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateTask}
       />
+
+      {/* Edit task modal */}
+      <EditTaskModal
+        isOpen={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+        task={editingTask}
+        onSubmit={handleEditSubmit}
+      />
+
+      {/* Delete confirmation modal */}
+      {deletingTaskId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setDeletingTaskId(null); }}
+        >
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <polyline strokeLinecap="round" strokeLinejoin="round" points="3,6 21,6" />
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14H6L5 6" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Delete task</h3>
+                <p className="text-sm text-gray-500">
+                  {(() => {
+                    const t = tasks.find((t) => t.id === deletingTaskId);
+                    return t ? `"${t.title}"` : "This task";
+                  })()}
+                  {" "}will be permanently deleted.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingTaskId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold
+                           text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold
+                           hover:bg-red-600 active:bg-red-700 transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

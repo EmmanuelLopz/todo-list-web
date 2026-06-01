@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WelcomeCard from "../../components/WelcomeCard/WelcomeCard";
-import DueTodayCard, { type DueTask } from "../../components/DueTodayCard/DueTodayCard";
 import ListCard from "../../components/ListCard/ListCard";
 import CreateListModal from "../../components/CreateListModal/CreateListModal";
 import EditListModal from "../../components/EditListModal/EditListModal";
@@ -20,11 +19,6 @@ import styles from "./Home.module.css";
 const Home = () => {
   const navigate = useNavigate();
   const userName = "Scholar";
-
-  const [dueTasks, setDueTasks] = useState<DueTask[]>([
-    { id: "1", title: "Submit Thesis Draft", time: "5:00 PM", completed: false },
-    { id: "2", title: "Weekly Groceries", time: "7:00 PM", completed: false },
-  ]);
 
   const [lists, setLists] = useState<TaskList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,14 +103,6 @@ const Home = () => {
     fetchLists();
   };
 
-  const handleToggleTask = (id: string) => {
-    setDueTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
   const handleListClick = (list: TaskList) => {
     navigate(`/lists/${list.id}`, { state: { list } });
   };
@@ -124,12 +110,7 @@ const Home = () => {
   return (
     <section className={styles.container}>
       <div className={styles.TopRow}>
-        <WelcomeCard userName={userName} taskCount={dueTasks.length} />
-        <DueTodayCard
-          tasks={dueTasks}
-          priority="High Priority"
-          onToggle={handleToggleTask}
-        />
+        <WelcomeCard userName={userName} />
       </div>
 
       <div>
