@@ -1,14 +1,22 @@
-import React from "react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../services/authService";
 import styles from "./Header.module.css";
 
 const Header = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.leftSection}>
-        <div className={styles.logo}>TodoApp</div>
+        <div className={styles.logo}>Scholarly Atelier</div>
 
         <nav className={styles.nav}>
-          <a href="/" className={styles.link}>
+          <a href="/home" className={styles.link}>
             Dashboard
           </a>
           <a href="/about" className={styles.link}>
@@ -31,6 +39,9 @@ const Header = () => {
           alt="Foto de perfil"
           className={styles.profileImage}
         />
+        <button onClick={handleLogout} className={styles.logoutBtn}>
+          Log out
+        </button>
       </div>
     </header>
   );

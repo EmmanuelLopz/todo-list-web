@@ -1,17 +1,50 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Home, About } from "../pages";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { About, Home, Login, ListDetail } from "../pages";
 import Header from "../components/Header/Header";
+import PrivateRoute from "../components/PrivateRoute/PrivateRoute";
+import { getToken } from "../services/authService";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <Header />
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route
+          path="/"
+          element={getToken() ? <Navigate to="/home" replace /> : <Login />}
+        />
+
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <Header />
+              <Home />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/about"
+          element={
+            <PrivateRoute>
+              <Header />
+              <About />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/lists/:id"
+          element={
+            <PrivateRoute>
+              <Header />
+              <ListDetail />
+            </PrivateRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

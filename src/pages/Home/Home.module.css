@@ -4,7 +4,7 @@
   gap: 24px;
 }
 
-.topRow {
+.TopRow {
   display: grid;
   grid-template-columns: 3fr 1fr; /* 🔥 75% / 25% */
   gap: 100px;
