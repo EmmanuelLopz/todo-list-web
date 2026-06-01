@@ -1,0 +1,11 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.topRow {
+  display: grid;
+  grid-template-columns: 3fr 1fr; /* 🔥 75% / 25% */
+  gap: 100px;
+}
