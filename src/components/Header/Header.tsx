@@ -1,13 +1,10 @@
-import { useNavigate } from "react-router-dom";
 import { logout } from "../../services/authService";
 import styles from "./Header.module.css";
 
 const Header = () => {
-  const navigate = useNavigate();
-
   const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.replace("/");
   };
 
   return (

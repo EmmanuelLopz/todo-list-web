@@ -4,10 +4,7 @@ import { normalizeUuid } from '@/utils/uuid';
 /**
  * Delete an existing task on the backend.
  *
- * Calls DELETE /task/{taskId}, mirroring the singular path used by
- * GET /task/{taskId} and PUT /task/{taskId} on the Quarkus TaskResource.
- * The auth interceptor in services/api.ts attaches the Firebase idToken
- * automatically.
+ * Calls DELETE /tasks/{taskId}.
  *
  * @param taskId - The UUID of the task to delete
  */
@@ -19,7 +16,7 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   const normalizedTaskId = normalizeUuid(taskId);
 
   try {
-    await api.delete(`/task/${encodeURIComponent(normalizedTaskId)}`);
+    await api.delete(`/tasks/${encodeURIComponent(normalizedTaskId)}`);
   } catch (error: any) {
     const status = error?.response?.status;
     if (status === 401) {
