@@ -48,22 +48,28 @@ const ListDetail = () => {
   const percentage =
     tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  const handleToggle = async (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+  const handleToggle = async (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || !listId) return;
 
     const newCompleted = !task.completed;
 
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: newCompleted } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, completed: newCompleted } : t))
     );
     setSaveError(null);
 
     try {
-      await updateTask(id, { status: newCompleted });
+      await updateTask(taskId, {
+        status: newCompleted,
+        title: task.title,
+        description: task.description || undefined,
+        priorityId: task.priorityId ?? null,
+        dueDate: task.dueDate ?? null,
+      });
     } catch (err: unknown) {
       setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, completed: task.completed } : t))
+        prev.map((t) => (t.id === taskId ? { ...t, completed: task.completed } : t))
       );
       setSaveError(
         err instanceof Error ? err.message : "Failed to save. Please try again."
