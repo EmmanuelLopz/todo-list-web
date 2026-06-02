@@ -11,6 +11,7 @@ import type { TaskList } from "../../types/TaskList";
 import type { Task } from "../../types/Task";
 import type { CreateTaskFormData } from "../../components/CreateTaskModal/CreateTaskModal";
 import type { EditTaskFormData } from "../../components/EditTaskModal/EditTaskModal";
+import Button from "../../components/Button/Button";
 
 interface LocationState {
   list?: TaskList;
@@ -139,7 +140,7 @@ const ListDetail = () => {
       <button
         onClick={() => navigate("/home")}
         className="flex items-center gap-2 text-sm text-gray-500
-                   hover:text-violet-600 transition-colors group"
+                   hover:text-blue-700 transition-colors group"
       >
         <svg
           className="w-4 h-4 transition-transform group-hover:-translate-x-0.5"
@@ -238,16 +239,10 @@ const ListDetail = () => {
                 {pendingTasks.length} Remaining · {completedTasks.length} Done
               </span>
             )}
-            <button
-              type="button"
+            <Button
+              label="+ New Task"
               onClick={() => setCreateModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold
-                         bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800
-                         transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-            >
-              <span className="text-base leading-none">+</span>
-              New Task
-            </button>
+            />
           </div>
         </div>
 
