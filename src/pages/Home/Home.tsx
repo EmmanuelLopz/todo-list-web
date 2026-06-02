@@ -14,7 +14,7 @@ import { useColors } from "../../hooks/useColors";
 import type { TaskList } from "../../types/TaskList";
 import type { CreateListFormData } from "../../components/CreateListModal/CreateListModal";
 import type { EditListFormData } from "../../components/EditListModal/EditListModal";
-import styles from "./Home.module.css";
+import Button from "../../components/Button/Button";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -41,8 +41,6 @@ const Home = () => {
 
         const listsData = listsResult.value;
 
-        // Build per-list completion stats from the full task list.
-        // Falls back gracefully if GET /tasks fails.
         const statsMap = new Map<string, { total: number; completed: number }>();
         if (tasksResult.status === "fulfilled") {
           tasksResult.value.forEach((task) => {
@@ -108,8 +106,8 @@ const Home = () => {
   };
 
   return (
-    <section className={styles.container}>
-      <div className={styles.TopRow}>
+    <section className="flex flex-col gap-6 px-8 py-8 padding-[24px]">
+      <div className="grid grid-cols-[3fr_1fr] gap-[100px]">
         <WelcomeCard userName={userName} />
       </div>
 
@@ -121,20 +119,14 @@ const Home = () => {
           </div>
           <div className="flex items-center gap-3">
             {!loading && !error && (
-              <span className="text-xs font-semibold text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
+              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                 {lists.length} {lists.length === 1 ? "list" : "lists"}
               </span>
             )}
-            <button
-              type="button"
+            <Button
+              label="+ Create New List"
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
-                         bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800
-                         transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-            >
-              <span className="text-base leading-none">+</span>
-              Create New List
-            </button>
+            />
           </div>
         </div>
 
@@ -160,6 +152,7 @@ const Home = () => {
           ))}
         </div>
       </div>
+
       <CreateListModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
