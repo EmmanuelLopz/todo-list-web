@@ -1,10 +1,23 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { logout } from "../../services/authService";
+import authorAvatar from "../../assets/emmanuel.png";
 import styles from "./Header.module.css";
 
 const Header = () => {
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     logout();
     window.location.replace("/");
+  };
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && query.trim()) {
+      navigate(`/search?title=${encodeURIComponent(query.trim())}`);
+      setQuery("");
+    }
   };
 
   return (
@@ -25,14 +38,17 @@ const Header = () => {
       <div className={styles.centerSection}>
         <input
           type="text"
-          placeholder="Buscar tareas..."
+          placeholder="Search tasks..."
           className={styles.searchInput}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleSearch}
         />
       </div>
 
       <div className={styles.rightSection}>
         <img
-          src="https://i.pravatar.cc/40"
+          src={authorAvatar}
           alt="Foto de perfil"
           className={styles.profileImage}
         />
