@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken } from './authService';
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? '' : (import.meta.env.EXPO_PUBLIC_API_URL as string),
+  baseURL: import.meta.env.VITE_PUBLIC_API_URL as string,
   headers: {
     'Content-Type': 'application/json',
   },

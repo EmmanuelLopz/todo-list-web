@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { About, Home, Login, ListDetail } from "../pages";
+import { About, Home, Login, ListDetail, SearchResults } from "../pages";
 import Header from "../components/Header/Header";
 import PrivateRoute from "../components/PrivateRoute/PrivateRoute";
 import { getToken } from "../services/authService";
@@ -39,6 +39,16 @@ export default function AppRouter() {
             <PrivateRoute>
               <Header />
               <ListDetail />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/search"
+          element={
+            <PrivateRoute>
+              <Header />
+              <SearchResults />
             </PrivateRoute>
           }
         />
